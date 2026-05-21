@@ -1,8 +1,21 @@
 # Neural Alpha Allocation Engine
 
+![Python](https://img.shields.io/badge/Python-3.11-blue)
+![Streamlit](https://img.shields.io/badge/Streamlit-Deployed-success)
+![AI](https://img.shields.io/badge/AI-Portfolio%20Optimization-purple)
+![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+
 An institutional-style quantitative research framework for deep learning based portfolio optimization, financial sentiment analysis, and neural asset allocation strategies.
 
 This project combines machine learning, quantitative finance, portfolio optimization, and financial NLP pipelines to build intelligent asset allocation and portfolio forecasting systems using LSTM networks, Transformer architectures, and sentiment-driven alpha generation methodologies.
+
+---
+
+# Live Quant Dashboard
+
+Experience the deployed institutional AI portfolio intelligence platform:
+
+🚀 https://neural-alpha-allocation-engine-jussebnez5xff9tmpj2q9b.streamlit.app
 
 ---
 
@@ -61,11 +74,14 @@ The project focuses on combining structured market data with unstructured financ
 
 ## Visualization and Dashboarding
 
-- Streamlit-based analytics dashboard
+- Institutional-grade Streamlit dashboard
 - Portfolio allocation visualizations
 - Forecast comparison charts
 - Benchmark evaluation dashboards
 - Interactive portfolio monitoring tools
+- AI confidence signal tracking
+- Correlation heatmaps
+- Risk diagnostics interface
 
 ---
 
@@ -85,6 +101,7 @@ The project focuses on combining structured market data with unstructured financ
 - NumPy
 - Scikit-learn
 - Matplotlib
+- Plotly
 
 ## Financial NLP
 
@@ -98,6 +115,7 @@ The project focuses on combining structured market data with unstructured financ
 - Sharpe Ratio Analytics
 - Sequential Forecasting
 - Deep Learning for Finance
+- Financial Risk Modeling
 
 ---
 
@@ -109,6 +127,8 @@ neural-alpha-allocation-engine/
 ├── analytics/                  # Portfolio analytics and performance metrics
 ├── configs/                    # Configuration and environment settings
 ├── dashboards/                 # Streamlit dashboard applications
+│   └── app.py
+│
 ├── datasets/                   # Financial datasets and prediction outputs
 │   ├── evaluation/
 │   ├── news/
@@ -181,15 +201,19 @@ The allocation engine follows a multi-stage quantitative workflow:
 
 # Dashboard Features
 
-The Streamlit dashboard includes:
+The institutional analytics dashboard includes:
 
 - Portfolio performance tracking
 - Allocation monitoring
-- Prediction comparison charts
+- Forecast horizon simulation
+- Prediction comparison analytics
+- AI signal confidence engine
 - Benchmark analytics
 - Portfolio diagnostics
-- Allocation heatmaps
-- Forecast visualizations
+- Correlation heatmaps
+- Risk-adjusted portfolio evaluation
+- Dynamic allocation visualizations
+- Financial sentiment intelligence panel
 
 ---
 
@@ -202,6 +226,7 @@ The repository contains:
 - Evaluation benchmark datasets
 - Multi-asset forecasting results
 - Portfolio experiment reports
+- Financial sentiment datasets
 
 ---
 
@@ -215,6 +240,7 @@ Potential use cases include:
 - Financial NLP research
 - Systematic investment strategy analysis
 - Machine learning driven asset management
+- Institutional quantitative research simulation
 
 ---
 
@@ -227,8 +253,9 @@ Planned enhancements include:
 - Multi-factor portfolio optimization
 - GPU-accelerated training pipelines
 - Advanced risk modeling
-- Live deployment infrastructure
+- Live financial API integrations
 - Alternative data integration
+- Institutional execution simulation
 
 ---
 
@@ -237,11 +264,14 @@ Planned enhancements include:
 ## Clone Repository
 
 ```bash
-git clone https://github.com/your-username/neural-alpha-allocation-engine.git
+git clone https://github.com/KrishnaRai1/neural-alpha-allocation-engine.git
+
 cd neural-alpha-allocation-engine
 ```
 
-## Install Dependencies
+---
+
+# Install Dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -254,6 +284,20 @@ pip install -r requirements.txt
 ```bash
 streamlit run dashboards/app.py
 ```
+
+---
+
+# Dashboard Preview
+
+The deployed dashboard includes:
+
+- AI-powered portfolio intelligence
+- Institutional analytics visualization
+- Dynamic forecasting engine
+- Risk profile simulation
+- Financial sentiment intelligence
+- Quantitative allocation monitoring
+- Interactive deep learning research environment
 
 ---
 
