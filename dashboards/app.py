@@ -18,7 +18,7 @@ st.set_page_config(
 )
 
 # =========================================================
-# CUSTOM STYLING
+# CUSTOM CSS
 # =========================================================
 
 st.markdown("""
@@ -68,7 +68,7 @@ section[data-testid="stSidebar"] {
         0 0 50px rgba(0,0,0,0.35);
 }
 
-.metric-card {
+.metric-box {
     background:
         linear-gradient(
             145deg,
@@ -86,45 +86,18 @@ section[data-testid="stSidebar"] {
         0 0 25px rgba(0,0,0,0.35);
 }
 
-.metric-title {
-    color: #94A3B8;
-    font-size: 14px;
-    margin-bottom: 10px;
-}
-
-.metric-value {
-    color: white;
-    font-size: 38px;
-    font-weight: 700;
-}
-
-.metric-positive {
-    color: #22C55E;
-    margin-top: 10px;
-}
-
-.metric-negative {
-    color: #EF4444;
-    margin-top: 10px;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
 # =========================================================
-# LOAD DATASETS
+# DATA PATHS
 # =========================================================
 
 PREDICTIONS_PATH = Path("datasets/predictions")
-EVALUATION_PATH = Path("datasets/evaluation")
 NEWS_PATH = Path("datasets/news")
 
 prediction_files = sorted(
     list(PREDICTIONS_PATH.glob("*.csv"))
-)
-
-evaluation_files = sorted(
-    list(EVALUATION_PATH.glob("*.csv"))
 )
 
 # =========================================================
@@ -164,7 +137,7 @@ risk_profile = st.sidebar.radio(
 )
 
 # =========================================================
-# LOAD CSV
+# LOAD DATASET
 # =========================================================
 
 selected_file_path = PREDICTIONS_PATH / selected_prediction
@@ -181,7 +154,7 @@ numeric_columns = prediction_df.select_dtypes(
 
 if len(numeric_columns) == 0:
 
-    st.error("No numeric columns found in dataset.")
+    st.error("No numeric columns found.")
     st.stop()
 
 target_column = numeric_columns[0]
@@ -189,7 +162,7 @@ target_column = numeric_columns[0]
 series = prediction_df[target_column].dropna()
 
 # =========================================================
-# REAL FINANCIAL METRICS
+# FINANCIAL METRICS
 # =========================================================
 
 returns = series.pct_change().dropna()
@@ -226,17 +199,30 @@ max_drawdown = round(
 # AI SIGNAL SCORE
 # =========================================================
 
+signal_strength = round(
+    (
+        (
+            sharpe_ratio * 35
+        )
+        +
+        (
+            max(
+                portfolio_return,
+                0
+            ) * 0.8
+        )
+        -
+        (
+            abs(max_drawdown) * 1.2
+        )
+    )
+)
+
 signal_strength = int(
     np.clip(
-        (
-            sharpe_ratio * 20
-            +
-            (portfolio_return / 2)
-            -
-            abs(max_drawdown)
-        ),
-        45,
-        96
+        signal_strength,
+        38,
+        94
     )
 )
 
@@ -259,7 +245,7 @@ Institutional Quantitative Intelligence Platform
 """, unsafe_allow_html=True)
 
 # =========================================================
-# TOP METRICS
+# TOP INFO
 # =========================================================
 
 m1, m2, m3, m4 = st.columns(4)
@@ -280,100 +266,56 @@ m3.metric(
 )
 
 m4.metric(
-    "Model",
+    "Forecasting Model",
     selected_model
 )
 
 st.markdown("<br>", unsafe_allow_html=True)
 
 # =========================================================
-# KPI CARDS
+# KPI SECTION
 # =========================================================
 
 c1, c2, c3, c4 = st.columns(4)
 
 with c1:
-
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-title">
-        Annualized Return
-        </div>
-
-        <div class="metric-value">
-        {portfolio_return}%
-        </div>
-
-        <div class="metric-positive">
-        Computed from prediction dataset
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.metric(
+        "Annualized Return",
+        f"{portfolio_return:.2f}%",
+        "Computed from prediction dataset"
+    )
 
 with c2:
-
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-title">
-        Sharpe Ratio
-        </div>
-
-        <div class="metric-value">
-        {sharpe_ratio}
-        </div>
-
-        <div class="metric-positive">
-        Risk-adjusted performance
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.metric(
+        "Sharpe Ratio",
+        f"{sharpe_ratio:.2f}",
+        "Risk-adjusted performance"
+    )
 
 with c3:
-
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-title">
-        Annualized Volatility
-        </div>
-
-        <div class="metric-value">
-        {volatility}%
-        </div>
-
-        <div class="metric-negative">
-        Standard deviation risk metric
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.metric(
+        "Annualized Volatility",
+        f"{volatility:.2f}%",
+        "Standard deviation risk"
+    )
 
 with c4:
-
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-title">
-        Maximum Drawdown
-        </div>
-
-        <div class="metric-value">
-        {max_drawdown}%
-        </div>
-
-        <div class="metric-negative">
-        Portfolio downside exposure
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.metric(
+        "Maximum Drawdown",
+        f"{max_drawdown:.2f}%",
+        "Portfolio downside exposure"
+    )
 
 st.markdown("<br>", unsafe_allow_html=True)
 
 # =========================================================
-# MAIN GRID
+# MAIN DASHBOARD GRID
 # =========================================================
 
 left_col, right_col = st.columns([2.4,1])
 
 # =========================================================
-# PORTFOLIO CHART
+# MAIN CHART
 # =========================================================
 
 with left_col:
@@ -416,7 +358,7 @@ with left_col:
     )
 
 # =========================================================
-# RIGHT SIDE PANEL
+# RIGHT PANEL
 # =========================================================
 
 with right_col:
@@ -492,17 +434,11 @@ with left_bottom:
 
     st.markdown("## Portfolio Allocation")
 
-    assets = [
-        "AAPL",
-        "MSFT",
-        "NVDA",
-        "TSLA",
-        "META"
-    ]
+    asset_names = numeric_columns[:5]
 
     latest_values = []
 
-    for col in numeric_columns[:5]:
+    for col in asset_names:
 
         latest_values.append(
             abs(prediction_df[col].iloc[-1])
@@ -511,7 +447,7 @@ with left_bottom:
     allocation_fig = go.Figure(
         data=[
             go.Pie(
-                labels=assets[:len(latest_values)],
+                labels=asset_names,
                 values=latest_values,
                 hole=0.55
             )
@@ -531,7 +467,7 @@ with left_bottom:
     )
 
 # =========================================================
-# RISK HEATMAP
+# CORRELATION HEATMAP
 # =========================================================
 
 with right_bottom:
@@ -573,6 +509,7 @@ st.markdown("---")
 st.markdown("## Model Performance Comparison")
 
 comparison_df = pd.DataFrame({
+
     "Model": [
         "LSTM",
         "Transformer",
@@ -580,9 +517,21 @@ comparison_df = pd.DataFrame({
     ],
 
     "Sharpe Ratio": [
-        round(sharpe_ratio * 0.92, 2),
-        round(sharpe_ratio * 1.03, 2),
-        round(sharpe_ratio * 1.11, 2)
+
+        round(
+            sharpe_ratio * 0.92,
+            2
+        ),
+
+        round(
+            sharpe_ratio * 1.03,
+            2
+        ),
+
+        round(
+            sharpe_ratio * 1.11,
+            2
+        )
     ]
 })
 
@@ -618,13 +567,19 @@ st.markdown("---")
 
 st.markdown("## Financial Sentiment Intelligence")
 
-news_files = list(NEWS_PATH.glob("*.json"))
+news_files = list(
+    NEWS_PATH.glob("*.json")
+)
 
 if len(news_files) > 0:
 
     selected_news = news_files[0]
 
-    with open(selected_news, "r", encoding="utf-8") as f:
+    with open(
+        selected_news,
+        "r",
+        encoding="utf-8"
+    ) as f:
 
         news_data = json.load(f)
 
