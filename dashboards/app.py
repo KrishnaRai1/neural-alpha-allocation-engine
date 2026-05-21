@@ -176,7 +176,7 @@ series = prediction_df[
 ].dropna()
 
 # =========================================================
-# REAL FINANCIAL METRICS
+# FINANCIAL METRICS
 # =========================================================
 
 returns = series.pct_change().dropna()
@@ -486,8 +486,37 @@ with right_col:
         "## Prediction Summary"
     )
 
+    summary_df = pd.DataFrame({
+
+        "Metric": [
+
+            "Dataset Rows",
+            "Dataset Columns",
+            "Average Prediction",
+            "Maximum Prediction",
+            "Minimum Prediction",
+            "Prediction Std Dev"
+
+        ],
+
+        "Value": [
+
+            len(prediction_df),
+
+            len(prediction_df.columns),
+
+            round(series.mean(), 2),
+
+            round(series.max(), 2),
+
+            round(series.min(), 2),
+
+            round(series.std(), 2)
+        ]
+    })
+
     st.dataframe(
-        prediction_df.head(10),
+        summary_df,
         use_container_width=True
     )
 
@@ -689,8 +718,6 @@ if len(news_files) > 0:
 
         articles = []
 
-        # HANDLE DIFFERENT JSON STRUCTURES
-
         if isinstance(news_data, dict):
 
             if "articles" in news_data:
@@ -709,110 +736,110 @@ if len(news_files) > 0:
 
             articles = news_data
 
-        # DISPLAY ARTICLES
+        displayed_titles = set()
 
         if len(articles) > 0:
 
-            for article in articles[:6]:
+            shown_count = 0
+
+            for article in articles:
+
+                if shown_count >= 5:
+                    break
+
+                if not isinstance(article, dict):
+                    continue
+
+                title = (
+                    article.get("title")
+                    or article.get("headline")
+                    or "Financial Market Update"
+                )
+
+                # REMOVE DUPLICATES
+
+                if title in displayed_titles:
+                    continue
+
+                displayed_titles.add(title)
+
+                description = (
+                    article.get("description")
+                    or article.get("summary")
+                    or "Institutional market analysis and quantitative sentiment evaluation."
+                )
+
+                published = (
+                    article.get("publishedAt")
+                    or article.get("date")
+                    or "N/A"
+                )
+
+                url = (
+                    article.get("url")
+                    or article.get("link")
+                    or "#"
+                )
+
+                source = (
+                    "Financial Intelligence Feed"
+                )
 
                 if isinstance(
-                    article,
+                    article.get("source"),
                     dict
                 ):
 
-                    title = (
-                        article.get("title")
-                        or article.get(
-                            "headline"
-                        )
-                        or
-                        "Financial Market Update"
+                    source = article[
+                        "source"
+                    ].get(
+                        "name",
+                        source
                     )
 
-                    description = (
-                        article.get(
-                            "description"
-                        )
-                        or article.get(
-                            "summary"
-                        )
-                        or
-                        "Institutional market analysis and quantitative sentiment evaluation."
-                    )
+                st.markdown(f"""
 
-                    published = (
-                        article.get(
-                            "publishedAt"
-                        )
-                        or article.get(
-                            "date"
-                        )
-                        or "N/A"
-                    )
+                <div style="
+                    background:#111827;
+                    padding:22px;
+                    border-radius:18px;
+                    margin-bottom:18px;
+                    border:1px solid rgba(255,255,255,0.06);
+                ">
 
-                    url = (
-                        article.get("url")
-                        or article.get(
-                            "link"
-                        )
-                        or "#"
-                    )
+                <h4 style="
+                    color:white;
+                ">
+                {title}
+                </h4>
 
-                    source = (
-                        "Financial Intelligence Feed"
-                    )
+                <p style="
+                    color:#94A3B8;
+                    margin-top:10px;
+                ">
+                {description}
+                </p>
 
-                    if isinstance(
-                        article.get("source"),
-                        dict
-                    ):
+                <p style="
+                    color:#60A5FA;
+                    margin-top:10px;
+                ">
+                {source} • {published}
+                </p>
 
-                        source = article[
-                            "source"
-                        ].get(
-                            "name",
-                            source
-                        )
+                <a href="{url}"
+                   target="_blank">
 
-                    st.markdown(f"""
+                Read Full Article
 
-                    <div style="
-                        background:#111827;
-                        padding:22px;
-                        border-radius:18px;
-                        margin-bottom:18px;
-                        border:1px solid rgba(255,255,255,0.06);
-                    ">
+                </a>
 
-                    <h4 style="
-                        color:white;
-                    ">
-                    {title}
-                    </h4>
+                </div>
 
-                    <p style="
-                        color:#94A3B8;
-                    ">
-                    {description}
-                    </p>
+                """,
+                unsafe_allow_html=True)
 
-                    <p style="
-                        color:#60A5FA;
-                    ">
-                    {source} • {published}
-                    </p>
-
-                    <a href="{url}"
-                       target="_blank">
-
-                    Read Full Article
-
-                    </a>
-
-                    </div>
-
-                    """,
-                    unsafe_allow_html=True)
+                shown_count += 1
 
         else:
 
@@ -845,7 +872,7 @@ st.markdown(
 )
 
 st.dataframe(
-    prediction_df,
+    prediction_df.head(20),
     use_container_width=True
 )
 
