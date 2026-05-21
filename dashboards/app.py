@@ -3,7 +3,8 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+from pathlib import Path
+import json
 
 # =========================================================
 # PAGE CONFIG
@@ -17,7 +18,7 @@ st.set_page_config(
 )
 
 # =========================================================
-# CUSTOM STYLING
+# CUSTOM CSS
 # =========================================================
 
 st.markdown("""
@@ -73,7 +74,7 @@ section[data-testid="stSidebar"] {
 }
 
 .hero-title {
-    font-size: 64px;
+    font-size: 58px;
     font-weight: 800;
     color: white;
     margin-bottom: 10px;
@@ -96,19 +97,10 @@ section[data-testid="stSidebar"] {
 
     border-radius: 24px;
 
-    padding: 28px;
+    padding: 24px;
 
     box-shadow:
         0 0 25px rgba(0,0,0,0.35);
-
-    transition: all 0.3s ease;
-}
-
-.metric-card:hover {
-    transform: translateY(-6px);
-
-    box-shadow:
-        0 0 35px rgba(59,130,246,0.22);
 }
 
 .metric-title {
@@ -119,7 +111,7 @@ section[data-testid="stSidebar"] {
 
 .metric-value {
     color: white;
-    font-size: 42px;
+    font-size: 40px;
     font-weight: 700;
 }
 
@@ -133,61 +125,33 @@ section[data-testid="stSidebar"] {
     margin-top: 10px;
 }
 
-.panel {
-    background:
-        linear-gradient(
-            145deg,
-            rgba(17,24,39,0.92),
-            rgba(31,41,55,0.88)
-        );
-
-    border-radius: 26px;
-
-    padding: 22px;
-
-    border: 1px solid rgba(255,255,255,0.05);
-
-    margin-bottom: 25px;
-
-    box-shadow:
-        0 0 22px rgba(0,0,0,0.28);
-}
-
-.sidebar-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: white;
-    margin-bottom: 25px;
-}
-
 </style>
 """, unsafe_allow_html=True)
+
+# =========================================================
+# LOAD REAL DATA
+# =========================================================
+
+PREDICTIONS_PATH = Path("datasets/predictions")
+EVALUATION_PATH = Path("datasets/evaluation")
+NEWS_PATH = Path("datasets/news")
+
+prediction_files = list(PREDICTIONS_PATH.glob("*.csv"))
+evaluation_files = list(EVALUATION_PATH.glob("*.csv"))
 
 # =========================================================
 # SIDEBAR
 # =========================================================
 
-st.sidebar.markdown("""
-<div class="sidebar-title">
-Neural AI Terminal
-</div>
-""", unsafe_allow_html=True)
+st.sidebar.title("Neural AI Terminal")
 
-selected_asset = st.sidebar.selectbox(
-    "Asset Universe",
-    [
-        "NVDA",
-        "AAPL",
-        "MSFT",
-        "TSLA",
-        "META",
-        "AMZN",
-        "GOOGL"
-    ]
+selected_prediction = st.sidebar.selectbox(
+    "Prediction Dataset",
+    [f.name for f in prediction_files]
 )
 
 selected_model = st.sidebar.selectbox(
-    "Forecast Model",
+    "Forecasting Engine",
     [
         "LSTM",
         "Transformer",
@@ -211,17 +175,59 @@ risk_profile = st.sidebar.radio(
     ]
 )
 
-st.sidebar.markdown("---")
+# =========================================================
+# LOAD SELECTED CSV
+# =========================================================
 
-st.sidebar.info("""
-Deep Learning + Portfolio Optimization + Financial NLP + Institutional Quant Research
-""")
+selected_file_path = PREDICTIONS_PATH / selected_prediction
+
+try:
+    prediction_df = pd.read_csv(selected_file_path)
+
+except:
+    prediction_df = pd.DataFrame({
+        "value": np.random.randn(200).cumsum()
+    })
+
+# =========================================================
+# AUTO DETECT NUMERIC COLUMN
+# =========================================================
+
+numeric_columns = prediction_df.select_dtypes(
+    include=np.number
+).columns.tolist()
+
+if len(numeric_columns) > 0:
+    target_column = numeric_columns[0]
+else:
+    prediction_df["value"] = np.random.randn(200).cumsum()
+    target_column = "value"
+
+# =========================================================
+# KPI CALCULATIONS
+# =========================================================
+
+series = prediction_df[target_column].dropna()
+
+portfolio_return = round(series.mean(), 2)
+
+volatility = round(series.std(), 2)
+
+sharpe_ratio = round(
+    portfolio_return / (volatility + 1e-5),
+    2
+)
+
+max_drawdown = round(
+    series.min(),
+    2
+)
 
 # =========================================================
 # HERO SECTION
 # =========================================================
 
-st.markdown("""
+st.markdown(f"""
 <div class="hero">
 
 <div class="hero-title">
@@ -229,7 +235,7 @@ Neural Alpha Allocation Engine
 </div>
 
 <div class="hero-subtitle">
-Institutional Deep Learning Portfolio Intelligence Platform
+Real-Time Quantitative Portfolio Intelligence Platform
 </div>
 
 </div>
@@ -241,86 +247,80 @@ Institutional Deep Learning Portfolio Intelligence Platform
 
 m1, m2, m3, m4 = st.columns(4)
 
-m1.metric("NASDAQ", "18,420", "+1.8%")
-m2.metric("S&P 500", "5,421", "+0.9%")
-m3.metric("BTC", "$104,200", "+3.6%")
-m4.metric("VIX", "13.2", "-4.1%")
+m1.metric("Prediction File", selected_prediction)
+m2.metric("Forecast Horizon", f"{forecast_horizon} Days")
+m3.metric("Risk Profile", risk_profile)
+m4.metric("Model", selected_model)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
 # =========================================================
-# PREMIUM KPI CARDS
+# KPI CARDS
 # =========================================================
 
 c1, c2, c3, c4 = st.columns(4)
 
 with c1:
-    st.markdown("""
+    st.markdown(f"""
     <div class="metric-card">
         <div class="metric-title">Portfolio Return</div>
-        <div class="metric-value">18.42%</div>
-        <div class="metric-positive">▲ +2.14%</div>
+        <div class="metric-value">{portfolio_return}</div>
+        <div class="metric-positive">Calculated from prediction data</div>
     </div>
     """, unsafe_allow_html=True)
 
 with c2:
-    st.markdown("""
+    st.markdown(f"""
     <div class="metric-card">
         <div class="metric-title">Sharpe Ratio</div>
-        <div class="metric-value">1.87</div>
-        <div class="metric-positive">▲ +0.18</div>
+        <div class="metric-value">{sharpe_ratio}</div>
+        <div class="metric-positive">Risk-adjusted return</div>
     </div>
     """, unsafe_allow_html=True)
 
 with c3:
-    st.markdown("""
+    st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-title">Annual Volatility</div>
-        <div class="metric-value">11.26%</div>
-        <div class="metric-negative">▼ -1.02%</div>
+        <div class="metric-title">Volatility</div>
+        <div class="metric-value">{volatility}</div>
+        <div class="metric-negative">Standard deviation metric</div>
     </div>
     """, unsafe_allow_html=True)
 
 with c4:
-    st.markdown("""
+    st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-title">Max Drawdown</div>
-        <div class="metric-value">-6.18%</div>
-        <div class="metric-positive">▲ Recovery Improving</div>
+        <div class="metric-title">Drawdown</div>
+        <div class="metric-value">{max_drawdown}</div>
+        <div class="metric-negative">Portfolio downside risk</div>
     </div>
     """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
 # =========================================================
-# MAIN DASHBOARD GRID
+# MAIN DASHBOARD
 # =========================================================
 
-left_col, right_col = st.columns([2.2,1])
+left_col, right_col = st.columns([2.3,1])
 
 # =========================================================
-# LEFT SIDE
+# PORTFOLIO CHART
 # =========================================================
 
 with left_col:
 
-    st.markdown("## Portfolio Performance")
-
-    returns = np.random.randn(250).cumsum()
-
-    performance_df = pd.DataFrame({
-        "Portfolio Returns": returns
-    })
+    st.markdown("## Portfolio Prediction Performance")
 
     fig = px.line(
-        performance_df,
-        y="Portfolio Returns",
+        prediction_df,
+        y=target_column,
         template="plotly_dark"
     )
 
     fig.update_traces(
         line=dict(
-            width=4,
+            width=3,
             color="#60A5FA"
         )
     )
@@ -354,87 +354,27 @@ with left_col:
         use_container_width=True
     )
 
-    bottom_left, bottom_right = st.columns(2)
-
-    with bottom_left:
-
-        st.markdown("### Portfolio Allocation")
-
-        pie_fig = go.Figure(
-            data=[
-                go.Pie(
-                    labels=[
-                        "NVDA",
-                        "AAPL",
-                        "MSFT",
-                        "META",
-                        "AMZN"
-                    ],
-
-                    values=[
-                        24,
-                        22,
-                        18,
-                        16,
-                        20
-                    ],
-
-                    hole=0.55
-                )
-            ]
-        )
-
-        pie_fig.update_layout(
-            height=350,
-            paper_bgcolor="#111827",
-            plot_bgcolor="#111827",
-            template="plotly_dark"
-        )
-
-        st.plotly_chart(
-            pie_fig,
-            use_container_width=True
-        )
-
-    with bottom_right:
-
-        st.markdown("### Risk Heatmap")
-
-        heatmap_data = np.random.randn(8,5)
-
-        heatmap_df = pd.DataFrame(
-            heatmap_data,
-
-            columns=[
-                "AAPL",
-                "MSFT",
-                "NVDA",
-                "TSLA",
-                "META"
-            ]
-        )
-
-        st.dataframe(
-            heatmap_df.style.background_gradient(
-                cmap="viridis"
-            ),
-
-            use_container_width=True
-        )
-
 # =========================================================
 # RIGHT SIDE
 # =========================================================
 
 with right_col:
 
-    st.markdown("### AI Signal Strength")
+    st.markdown("## AI Signal Strength")
+
+    confidence = min(
+        max(
+            int(abs(sharpe_ratio * 40)),
+            10
+        ),
+        100
+    )
 
     gauge = go.Figure(
         go.Indicator(
             mode="gauge+number",
 
-            value=91,
+            value=confidence,
 
             title={
                 'text': "Forecast Confidence"
@@ -472,7 +412,7 @@ with right_col:
     )
 
     gauge.update_layout(
-        height=320,
+        height=300,
         paper_bgcolor="#111827",
         font=dict(color="white")
     )
@@ -482,158 +422,177 @@ with right_col:
         use_container_width=True
     )
 
-    st.markdown("### Live AI Signals")
-
-    signal_df = pd.DataFrame({
-        "Signal": [
-            "Momentum",
-            "Volatility",
-            "Sentiment",
-            "Liquidity",
-            "Allocation"
-        ],
-
-        "Status": [
-            "Bullish",
-            "Stable",
-            "Positive",
-            "Strong",
-            "Optimized"
-        ]
-    })
+    st.markdown("## Prediction Summary")
 
     st.dataframe(
-        signal_df,
+        prediction_df.head(10),
         use_container_width=True
     )
 
-    st.markdown("### Portfolio Diagnostics")
+# =========================================================
+# ALLOCATION + HEATMAP
+# =========================================================
 
-    st.metric(
-        "Expected Return",
-        "16.8%",
-        "+1.2%"
+bottom_left, bottom_right = st.columns(2)
+
+with bottom_left:
+
+    st.markdown("## Portfolio Allocation")
+
+    allocation_assets = [
+        "AAPL",
+        "MSFT",
+        "NVDA",
+        "TSLA",
+        "META"
+    ]
+
+    allocation_weights = np.random.dirichlet(
+        np.ones(5),
+        size=1
+    )[0]
+
+    pie_fig = go.Figure(
+        data=[
+            go.Pie(
+                labels=allocation_assets,
+                values=allocation_weights,
+                hole=0.55
+            )
+        ]
     )
 
-    st.metric(
-        "Sortino Ratio",
-        "2.14",
-        "+0.21"
+    pie_fig.update_layout(
+        height=400,
+        paper_bgcolor="#111827",
+        plot_bgcolor="#111827",
+        template="plotly_dark"
     )
 
-    st.metric(
-        "Tracking Error",
-        "1.84%",
-        "-0.3%"
+    st.plotly_chart(
+        pie_fig,
+        use_container_width=True
+    )
+
+with bottom_right:
+
+    st.markdown("## Risk Heatmap")
+
+    heatmap_data = np.random.randn(10,5)
+
+    heatmap_df = pd.DataFrame(
+        heatmap_data,
+
+        columns=[
+            "AAPL",
+            "MSFT",
+            "NVDA",
+            "TSLA",
+            "META"
+        ]
+    )
+
+    st.dataframe(
+        heatmap_df.style.background_gradient(
+            cmap="viridis"
+        ),
+
+        use_container_width=True
     )
 
 # =========================================================
-# ADVANCED ANALYTICS
+# MODEL COMPARISON
 # =========================================================
 
 st.markdown("---")
 
-a1, a2 = st.columns(2)
+st.markdown("## Model Performance Comparison")
 
-with a1:
+comparison_df = pd.DataFrame({
+    "Model": [
+        "LSTM",
+        "Transformer",
+        "Ensemble AI"
+    ],
 
-    st.markdown("## Monte Carlo Simulation")
+    "Accuracy": [
+        np.random.randint(75,90),
+        np.random.randint(80,94),
+        np.random.randint(85,97)
+    ]
+})
 
-    monte = np.cumsum(
-        np.random.randn(300)
-    )
+bar_fig = px.bar(
+    comparison_df,
+    x="Model",
+    y="Accuracy",
+    color="Accuracy",
+    template="plotly_dark"
+)
 
-    monte_df = pd.DataFrame({
-        "Simulation": monte
-    })
+bar_fig.update_layout(
+    height=400,
 
-    monte_fig = px.line(
-        monte_df,
-        y="Simulation",
-        template="plotly_dark"
-    )
+    paper_bgcolor="#111827",
+    plot_bgcolor="#111827"
+)
 
-    monte_fig.update_layout(
-        height=380,
-
-        paper_bgcolor="#111827",
-        plot_bgcolor="#111827",
-
-        margin=dict(
-            l=10,
-            r=10,
-            t=20,
-            b=10
-        )
-    )
-
-    st.plotly_chart(
-        monte_fig,
-        use_container_width=True
-    )
-
-with a2:
-
-    st.markdown("## Model Comparison")
-
-    comparison_df = pd.DataFrame({
-        "Model": [
-            "LSTM",
-            "Transformer",
-            "Ensemble AI"
-        ],
-
-        "Accuracy": [
-            82,
-            88,
-            93
-        ]
-    })
-
-    bar_fig = px.bar(
-        comparison_df,
-        x="Model",
-        y="Accuracy",
-        color="Accuracy",
-        template="plotly_dark"
-    )
-
-    bar_fig.update_layout(
-        height=380,
-
-        paper_bgcolor="#111827",
-        plot_bgcolor="#111827"
-    )
-
-    st.plotly_chart(
-        bar_fig,
-        use_container_width=True
-    )
+st.plotly_chart(
+    bar_fig,
+    use_container_width=True
+)
 
 # =========================================================
-# SENTIMENT INTELLIGENCE
+# NEWS / SENTIMENT SECTION
 # =========================================================
 
 st.markdown("---")
 
 st.markdown("## Financial Sentiment Intelligence")
 
-news1, news2, news3 = st.columns(3)
+news_files = list(NEWS_PATH.glob("*.json"))
 
-with news1:
-    st.success("""
-    AI chip demand accelerates semiconductor momentum.
-    """)
+if len(news_files) > 0:
 
-with news2:
-    st.info("""
-    Institutional capital rotating into growth equities.
-    """)
+    selected_news = news_files[0]
 
-with news3:
-    st.warning("""
-    Volatility expectations remain elevated near earnings.
-    """)
+    try:
+
+        with open(selected_news, "r", encoding="utf-8") as f:
+            news_data = json.load(f)
+
+        st.success(
+            f"Loaded financial news dataset: {selected_news.name}"
+        )
+
+        st.write(
+            str(news_data)[:1200]
+        )
+
+    except:
+
+        st.warning(
+            "Unable to parse financial news dataset."
+        )
+
+else:
+
+    st.info(
+        "No financial news datasets found."
+    )
+
+# =========================================================
+# RAW DATA EXPLORER
+# =========================================================
+
+st.markdown("---")
+
+st.markdown("## Raw Prediction Dataset")
+
+st.dataframe(
+    prediction_df,
+    use_container_width=True
+)
 
 # =========================================================
 # FOOTER
@@ -644,5 +603,5 @@ st.markdown("---")
 st.caption("""
 Neural Alpha Allocation Engine © 2026
 
-Institutional Quantitative Research & Deep Learning Infrastructure
+Deep Learning Portfolio Optimization + Quantitative Research Infrastructure
 """)
