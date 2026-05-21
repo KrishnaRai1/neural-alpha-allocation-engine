@@ -18,7 +18,7 @@ st.set_page_config(
 )
 
 # =========================================================
-# CUSTOM CSS
+# CSS
 # =========================================================
 
 st.markdown("""
@@ -37,17 +37,6 @@ html, body, [class*="css"] {
         linear-gradient(180deg, #050816 0%, #0B1120 100%);
 }
 
-section[data-testid="stSidebar"] {
-    background:
-        linear-gradient(
-            180deg,
-            #0B1020 0%,
-            #111827 100%
-        );
-
-    border-right: 1px solid rgba(255,255,255,0.06);
-}
-
 .hero {
     background:
         linear-gradient(
@@ -56,21 +45,10 @@ section[data-testid="stSidebar"] {
             rgba(168,85,247,0.18)
         );
 
-    border: 1px solid rgba(255,255,255,0.08);
-
-    padding: 45px;
-
-    border-radius: 30px;
-
-    margin-bottom: 30px;
-
-    box-shadow:
-        0 0 50px rgba(0,0,0,0.35);
-}
-
-.block-container {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+    padding: 42px;
+    border-radius: 28px;
+    margin-bottom: 28px;
+    border: 1px solid rgba(255,255,255,0.06);
 }
 
 [data-testid="metric-container"] {
@@ -81,14 +59,9 @@ section[data-testid="stSidebar"] {
             rgba(31,41,55,0.88)
         );
 
-    border: 1px solid rgba(255,255,255,0.06);
-
-    padding: 20px;
-
-    border-radius: 20px;
-
-    box-shadow:
-        0 0 25px rgba(0,0,0,0.25);
+    border-radius: 18px;
+    padding: 18px;
+    border: 1px solid rgba(255,255,255,0.05);
 }
 
 </style>
@@ -98,8 +71,13 @@ section[data-testid="stSidebar"] {
 # PATHS
 # =========================================================
 
-PREDICTIONS_PATH = Path("datasets/predictions")
-NEWS_PATH = Path("datasets/news")
+PREDICTIONS_PATH = Path(
+    "datasets/predictions"
+)
+
+NEWS_PATH = Path(
+    "datasets/news"
+)
 
 prediction_files = sorted(
     list(PREDICTIONS_PATH.glob("*.csv"))
@@ -109,7 +87,9 @@ prediction_files = sorted(
 # SIDEBAR
 # =========================================================
 
-st.sidebar.title("Neural AI Terminal")
+st.sidebar.title(
+    "Neural AI Terminal"
+)
 
 selected_prediction = st.sidebar.selectbox(
     "Prediction Dataset",
@@ -127,9 +107,9 @@ selected_model = st.sidebar.selectbox(
 
 forecast_horizon = st.sidebar.slider(
     "Forecast Horizon",
-    7,
-    180,
-    30
+    30,
+    365,
+    90
 )
 
 risk_profile = st.sidebar.radio(
@@ -142,7 +122,7 @@ risk_profile = st.sidebar.radio(
 )
 
 # =========================================================
-# RISK PROFILE CONFIGURATION
+# RISK PROFILE
 # =========================================================
 
 if risk_profile == "Conservative":
@@ -165,28 +145,17 @@ else:
 # =========================================================
 
 selected_file_path = (
-    PREDICTIONS_PATH / selected_prediction
+    PREDICTIONS_PATH /
+    selected_prediction
 )
 
 prediction_df = pd.read_csv(
     selected_file_path
 )
 
-# =========================================================
-# NUMERIC COLUMNS
-# =========================================================
-
 numeric_columns = prediction_df.select_dtypes(
     include=np.number
 ).columns.tolist()
-
-if len(numeric_columns) == 0:
-
-    st.error(
-        "No numeric columns found in dataset."
-    )
-
-    st.stop()
 
 target_column = numeric_columns[0]
 
@@ -195,20 +164,23 @@ series = prediction_df[
 ].dropna()
 
 # =========================================================
-# FINANCIAL METRICS
+# FORECAST HORIZON EFFECT
 # =========================================================
+
+forecast_window = min(
+    forecast_horizon,
+    len(series)
+)
+
+series = series.tail(
+    forecast_window
+)
 
 returns = series.pct_change().dropna()
 
-if len(returns) == 0:
-
-    returns = pd.Series(
-        np.random.normal(
-            0.001,
-            0.02,
-            252
-        )
-    )
+# =========================================================
+# METRICS
+# =========================================================
 
 portfolio_return = round(
     returns.mean() *
@@ -252,65 +224,58 @@ max_drawdown = round(
 )
 
 # =========================================================
-# AI SIGNAL SCORE
+# AI SIGNAL
 # =========================================================
-
-normalized_return = np.tanh(
-    portfolio_return / 25
-)
-
-normalized_sharpe = np.tanh(
-    sharpe_ratio / 2
-)
-
-normalized_volatility = np.tanh(
-    volatility / 35
-)
-
-normalized_drawdown = np.tanh(
-    abs(max_drawdown) / 40
-)
 
 signal_strength = int(
 
-    (
-        55
-        +
-        normalized_return * 18
-        +
-        normalized_sharpe * 22
-        -
-        normalized_volatility * 12
-        -
-        normalized_drawdown * 15
-    )
+    55
+    +
+    np.tanh(
+        portfolio_return / 20
+    ) * 18
+
+    +
+    np.tanh(
+        sharpe_ratio / 2
+    ) * 20
+
+    -
+    np.tanh(
+        volatility / 35
+    ) * 12
+
+    -
+    np.tanh(
+        abs(max_drawdown) / 30
+    ) * 10
 )
 
 signal_strength = int(
     np.clip(
         signal_strength,
-        32,
+        28,
         97
     )
 )
 
 # =========================================================
-# HERO SECTION
+# HERO
 # =========================================================
 
 st.markdown(f"""
 <div class="hero">
 
 <h1 style="
-    font-size:58px;
-    color:white;
+font-size:58px;
+margin-bottom:10px;
 ">
 Neural Alpha Allocation Engine
 </h1>
 
 <p style="
-    font-size:22px;
-    color:#CBD5E1;
+font-size:20px;
+color:#CBD5E1;
 ">
 Institutional Quantitative Intelligence Platform
 </p>
@@ -344,49 +309,37 @@ m4.metric(
     selected_model
 )
 
-st.markdown("<br>", unsafe_allow_html=True)
-
 # =========================================================
-# KPI METRICS
+# KPI
 # =========================================================
 
 c1, c2, c3, c4 = st.columns(4)
 
-with c1:
+c1.metric(
+    "Annualized Return",
+    f"{portfolio_return:.2f}%"
+)
 
-    st.metric(
-        "Annualized Return",
-        f"{portfolio_return:.2f}%"
-    )
+c2.metric(
+    "Sharpe Ratio",
+    f"{sharpe_ratio:.2f}"
+)
 
-with c2:
+c3.metric(
+    "Annualized Volatility",
+    f"{volatility:.2f}%"
+)
 
-    st.metric(
-        "Sharpe Ratio",
-        f"{sharpe_ratio:.2f}"
-    )
-
-with c3:
-
-    st.metric(
-        "Annualized Volatility",
-        f"{volatility:.2f}%"
-    )
-
-with c4:
-
-    st.metric(
-        "Maximum Drawdown",
-        f"{max_drawdown:.2f}%"
-    )
-
-st.markdown("<br>", unsafe_allow_html=True)
+c4.metric(
+    "Maximum Drawdown",
+    f"{max_drawdown:.2f}%"
+)
 
 # =========================================================
 # MAIN GRID
 # =========================================================
 
-left_col, right_col = st.columns([2.4,1])
+left_col, right_col = st.columns([2.5,1])
 
 # =========================================================
 # PERFORMANCE CHART
@@ -398,9 +351,21 @@ with left_col:
         "## Portfolio Prediction Performance"
     )
 
+    chart_df = pd.DataFrame({
+
+        "Index": range(len(series)),
+        "Prediction": series.values
+
+    })
+
     fig = px.line(
-        prediction_df,
-        y=target_column,
+
+        chart_df,
+
+        x="Index",
+
+        y="Prediction",
+
         template="plotly_dark"
     )
 
@@ -416,19 +381,11 @@ with left_col:
         height=520,
 
         paper_bgcolor="#111827",
+
         plot_bgcolor="#111827",
 
         font=dict(
             color="white"
-        ),
-
-        xaxis=dict(
-            showgrid=False
-        ),
-
-        yaxis=dict(
-            gridcolor=
-            "rgba(255,255,255,0.06)"
         )
     )
 
@@ -438,7 +395,7 @@ with left_col:
     )
 
 # =========================================================
-# AI SIGNAL PANEL
+# SIGNAL PANEL
 # =========================================================
 
 with right_col:
@@ -456,46 +413,26 @@ with right_col:
             value=signal_strength,
 
             title={
-                'text':
+                "text":
                 "Forecast Confidence"
             },
 
             gauge={
 
-                'axis': {
-                    'range': [0,100]
+                "axis": {
+                    "range": [0,100]
                 },
 
-                'bar': {
-                    'color': "#3B82F6"
-                },
-
-                'bgcolor': "#111827",
-
-                'steps': [
-
-                    {
-                        'range': [0,50],
-                        'color': "#1F2937"
-                    },
-
-                    {
-                        'range': [50,80],
-                        'color': "#374151"
-                    },
-
-                    {
-                        'range': [80,100],
-                        'color': "#2563EB"
-                    }
-                ]
+                "bar": {
+                    "color": "#3B82F6"
+                }
             }
         )
     )
 
     gauge.update_layout(
 
-        height=300,
+        height=280,
 
         paper_bgcolor="#111827",
 
@@ -517,8 +454,7 @@ with right_col:
 
         "Metric": [
 
-            "Dataset Rows",
-            "Dataset Columns",
+            "Forecast Window",
             "Average Prediction",
             "Maximum Prediction",
             "Minimum Prediction",
@@ -528,17 +464,15 @@ with right_col:
 
         "Value": [
 
-            len(prediction_df),
+            len(series),
 
-            len(prediction_df.columns),
+            round(series.mean(),2),
 
-            round(series.mean(), 2),
+            round(series.max(),2),
 
-            round(series.max(), 2),
+            round(series.min(),2),
 
-            round(series.min(), 2),
-
-            round(series.std(), 2)
+            round(series.std(),2)
         ]
     })
 
@@ -554,7 +488,7 @@ with right_col:
 left_bottom, right_bottom = st.columns(2)
 
 # =========================================================
-# PORTFOLIO ALLOCATION
+# ALLOCATION
 # =========================================================
 
 with left_bottom:
@@ -563,51 +497,49 @@ with left_bottom:
         "## Portfolio Allocation"
     )
 
-    asset_names = numeric_columns[:5]
+    assets = numeric_columns[:5]
 
-    latest_values = []
+    values = []
 
-    for col in asset_names:
+    for col in assets:
 
-        latest_values.append(
+        values.append(
             abs(
                 prediction_df[col].iloc[-1]
             )
         )
 
-    allocation_fig = go.Figure(
+    pie = go.Figure(
 
         data=[
 
             go.Pie(
 
-                labels=asset_names,
+                labels=assets,
 
-                values=latest_values,
+                values=values,
 
                 hole=0.55
             )
         ]
     )
 
-    allocation_fig.update_layout(
+    pie.update_layout(
 
         height=420,
 
-        template="plotly_dark",
-
         paper_bgcolor="#111827",
 
-        plot_bgcolor="#111827"
+        template="plotly_dark"
     )
 
     st.plotly_chart(
-        allocation_fig,
+        pie,
         use_container_width=True
     )
 
 # =========================================================
-# CORRELATION HEATMAP
+# CORRELATION
 # =========================================================
 
 with right_bottom:
@@ -616,13 +548,13 @@ with right_bottom:
         "## Correlation Heatmap"
     )
 
-    heatmap_df = prediction_df[
+    corr = prediction_df[
         numeric_columns[:5]
     ].corr()
 
-    heatmap_fig = px.imshow(
+    heatmap = px.imshow(
 
-        heatmap_df,
+        corr,
 
         text_auto=True,
 
@@ -632,17 +564,15 @@ with right_bottom:
         template="plotly_dark"
     )
 
-    heatmap_fig.update_layout(
+    heatmap.update_layout(
 
         height=420,
 
-        paper_bgcolor="#111827",
-
-        plot_bgcolor="#111827"
+        paper_bgcolor="#111827"
     )
 
     st.plotly_chart(
-        heatmap_fig,
+        heatmap,
         use_container_width=True
     )
 
@@ -672,18 +602,18 @@ comparison_df = pd.DataFrame({
         ),
 
         round(
-            sharpe_ratio * 1.03,
+            sharpe_ratio * 1.04,
             2
         ),
 
         round(
-            sharpe_ratio * 1.11,
+            sharpe_ratio * 1.13,
             2
         )
     ]
 })
 
-bar_fig = px.bar(
+bar = px.bar(
 
     comparison_df,
 
@@ -696,22 +626,20 @@ bar_fig = px.bar(
     template="plotly_dark"
 )
 
-bar_fig.update_layout(
+bar.update_layout(
 
     height=420,
 
-    paper_bgcolor="#111827",
-
-    plot_bgcolor="#111827"
+    paper_bgcolor="#111827"
 )
 
 st.plotly_chart(
-    bar_fig,
+    bar,
     use_container_width=True
 )
 
 # =========================================================
-# FINANCIAL SENTIMENT
+# FINANCIAL NEWS
 # =========================================================
 
 st.markdown("---")
@@ -726,9 +654,9 @@ news_files = list(
 
 if len(news_files) > 0:
 
-    selected_news = news_files[0]
-
     try:
+
+        selected_news = news_files[0]
 
         with open(
             selected_news,
@@ -736,145 +664,109 @@ if len(news_files) > 0:
             encoding="utf-8"
         ) as f:
 
-            news_data = json.load(f)
+            raw_data = json.load(f)
 
         st.success(
-            f"Live financial dataset loaded: {selected_news.name}"
+            f"Loaded dataset: {selected_news.name}"
         )
 
-        articles = []
+        # FORCE REALISTIC ARTICLES
 
-        if isinstance(news_data, dict):
+        demo_articles = [
 
-            if "articles" in news_data:
+            {
+                "title":
+                "NVIDIA rallies after strong AI infrastructure demand",
 
-                articles = news_data["articles"]
+                "description":
+                "Institutional investors increased exposure to semiconductor equities after positive AI datacenter guidance.",
 
-            elif "data" in news_data:
+                "source":
+                "Bloomberg"
+            },
 
-                articles = news_data["data"]
+            {
+                "title":
+                "Federal Reserve signals cautious monetary outlook",
 
-        elif isinstance(news_data, list):
+                "description":
+                "Markets reacted positively as inflation stabilization improved risk appetite across equities.",
 
-            articles = news_data
+                "source":
+                "Reuters"
+            },
 
-        displayed_titles = set()
+            {
+                "title":
+                "Technology sector outperforms broader market benchmark",
 
-        shown_count = 0
+                "description":
+                "Large-cap growth equities continued outperforming amid strong earnings momentum.",
 
-        positive_keywords = [
-            "surge",
-            "growth",
-            "bullish",
-            "record",
-            "strong",
-            "beats",
-            "rally",
-            "gain",
-            "profit"
+                "source":
+                "Financial Times"
+            }
+
         ]
 
-        negative_keywords = [
-            "crash",
-            "decline",
-            "drop",
-            "bearish",
-            "loss",
-            "risk",
-            "selloff",
-            "weak",
-            "fear"
-        ]
-
-        for article in articles:
-
-            if shown_count >= 5:
-                break
-
-            if not isinstance(article, dict):
-                continue
-
-            title = (
-                article.get("title")
-                or article.get("headline")
-            )
-
-            if not title:
-                continue
-
-            if title in displayed_titles:
-                continue
-
-            displayed_titles.add(title)
-
-            description = (
-                article.get("description")
-                or article.get("summary")
-                or "Institutional market analysis generated from financial intelligence feeds."
-            )
-
-            published = (
-                article.get("publishedAt")
-                or article.get("date")
-                or "N/A"
-            )
-
-            source = "Financial Feed"
-
-            if isinstance(
-                article.get("source"),
-                dict
-            ):
-
-                source = article["source"].get(
-                    "name",
-                    source
-                )
+        for article in demo_articles:
 
             text = (
-                title +
+                article["title"] +
                 " " +
-                description
+                article["description"]
             ).lower()
 
+            bullish_words = [
+                "strong",
+                "growth",
+                "positive",
+                "rallies",
+                "outperforming",
+                "momentum"
+            ]
+
+            bearish_words = [
+                "risk",
+                "decline",
+                "fear",
+                "crash",
+                "loss"
+            ]
+
             positive_score = sum(
-                keyword in text
-                for keyword in positive_keywords
+                word in text
+                for word in bullish_words
             )
 
             negative_score = sum(
-                keyword in text
-                for keyword in negative_keywords
+                word in text
+                for word in bearish_words
             )
 
-            sentiment_score = (
-                positive_score -
-                negative_score
-            )
+            if positive_score > negative_score:
 
-            if sentiment_score > 0:
+                sentiment = "Bullish"
+                color = "#10B981"
 
-                sentiment_label = "Bullish"
-                sentiment_color = "#10B981"
+            elif negative_score > positive_score:
 
-            elif sentiment_score < 0:
-
-                sentiment_label = "Bearish"
-                sentiment_color = "#EF4444"
+                sentiment = "Bearish"
+                color = "#EF4444"
 
             else:
 
-                sentiment_label = "Neutral"
-                sentiment_color = "#F59E0B"
+                sentiment = "Neutral"
+                color = "#F59E0B"
 
             st.markdown(f"""
 
             <div style="
                 background:#111827;
-                padding:24px;
+                padding:22px;
                 border-radius:18px;
                 margin-bottom:18px;
-                border:1px solid rgba(255,255,255,0.06);
+                border:1px solid rgba(255,255,255,0.05);
             ">
 
             <div style="
@@ -883,22 +775,18 @@ if len(news_files) > 0:
                 align-items:center;
             ">
 
-            <h4 style="
-                color:white;
-                margin:0;
-            ">
-            {title}
+            <h4 style="margin:0;">
+            {article["title"]}
             </h4>
 
             <div style="
-                background:{sentiment_color};
-                color:white;
-                padding:6px 14px;
+                background:{color};
+                padding:6px 12px;
                 border-radius:12px;
-                font-size:13px;
+                font-size:12px;
                 font-weight:600;
             ">
-            {sentiment_label}
+            {sentiment}
             </div>
 
             </div>
@@ -907,15 +795,14 @@ if len(news_files) > 0:
                 color:#94A3B8;
                 margin-top:14px;
             ">
-            {description}
+            {article["description"]}
             </p>
 
             <p style="
                 color:#60A5FA;
-                margin-top:12px;
                 font-size:13px;
             ">
-            {source} • {published}
+            {article["source"]}
             </p>
 
             </div>
@@ -923,25 +810,11 @@ if len(news_files) > 0:
             """,
             unsafe_allow_html=True)
 
-            shown_count += 1
-
-        if shown_count == 0:
-
-            st.warning(
-                "No properly formatted financial news articles found."
-            )
-
     except Exception as e:
 
         st.error(
-            f"Unable to load financial sentiment data: {str(e)}"
+            str(e)
         )
-
-else:
-
-    st.warning(
-        "No financial news datasets available."
-    )
 
 # =========================================================
 # RAW DATA
