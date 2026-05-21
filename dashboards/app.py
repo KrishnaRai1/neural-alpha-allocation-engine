@@ -22,34 +22,134 @@ st.set_page_config(
 st.markdown("""
 <style>
 
-html, body, [class*="css"]  {
+html, body, [class*="css"] {
     background-color: #050816;
     color: white;
     font-family: 'Inter', sans-serif;
 }
 
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0B1020 0%, #111827 100%);
+    background: linear-gradient(
+        180deg,
+        #0B1020 0%,
+        #111827 100%
+    );
+
     border-right: 1px solid rgba(255,255,255,0.05);
 }
 
-.metric-card {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.08);
-    padding: 20px;
-    border-radius: 18px;
-    backdrop-filter: blur(10px);
+.block-container {
+    padding-top: 2rem;
 }
 
-.dashboard-title {
-    font-size: 48px;
+.hero-container {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(37,99,235,0.18),
+            rgba(168,85,247,0.18)
+        );
+
+    padding: 45px;
+
+    border-radius: 30px;
+
+    border: 1px solid rgba(255,255,255,0.08);
+
+    margin-bottom: 30px;
+
+    box-shadow:
+        0 0 40px rgba(0,0,0,0.35);
+}
+
+.hero-title {
+    font-size: 60px;
     font-weight: 700;
     color: white;
+    margin-bottom: 12px;
 }
 
-.subtitle {
+.hero-subtitle {
+    font-size: 22px;
+    color: #D1D5DB;
+}
+
+.metric-container {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+    margin-bottom: 35px;
+}
+
+.metric-card {
+    flex: 1;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(17,24,39,0.92),
+            rgba(31,41,55,0.88)
+        );
+
+    border: 1px solid rgba(255,255,255,0.08);
+
+    padding: 30px;
+
+    border-radius: 24px;
+
+    backdrop-filter: blur(14px);
+
+    box-shadow:
+        0 0 35px rgba(0,0,0,0.35);
+
+    transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow:
+        0 0 40px rgba(59,130,246,0.28);
+}
+
+.metric-title {
     color: #9CA3AF;
-    font-size: 18px;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.metric-value {
+    color: white;
+    font-size: 42px;
+    font-weight: 700;
+}
+
+.metric-positive {
+    color: #22C55E;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.metric-negative {
+    color: #EF4444;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.dashboard-card {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(17,24,39,0.92),
+            rgba(31,41,55,0.88)
+        );
+
+    border-radius: 24px;
+
+    padding: 25px;
+
+    border: 1px solid rgba(255,255,255,0.06);
+
+    margin-bottom: 25px;
 }
 
 </style>
@@ -64,7 +164,7 @@ st.sidebar.image(
     use_container_width=True
 )
 
-st.sidebar.markdown("## Neural Allocation Terminal")
+st.sidebar.markdown("# Neural Allocation Terminal")
 
 selected_asset = st.sidebar.selectbox(
     "Asset Universe",
@@ -80,7 +180,7 @@ selected_asset = st.sidebar.selectbox(
 )
 
 selected_model = st.sidebar.selectbox(
-    "Forecasting Architecture",
+    "Forecasting Model",
     [
         "LSTM",
         "Transformer",
@@ -104,6 +204,15 @@ risk_profile = st.sidebar.radio(
     ]
 )
 
+rebalance_frequency = st.sidebar.selectbox(
+    "Rebalancing Frequency",
+    [
+        "Daily",
+        "Weekly",
+        "Monthly"
+    ]
+)
+
 st.sidebar.markdown("---")
 
 st.sidebar.success("""
@@ -111,65 +220,101 @@ Deep Learning + Portfolio Optimization + Financial NLP
 """)
 
 # =========================================================
-# HEADER
+# HERO SECTION
 # =========================================================
 
 st.markdown("""
-<div class="dashboard-title">
+<div class="hero-container">
+
+<div class="hero-title">
 Neural Alpha Allocation Engine
 </div>
 
-<div class="subtitle">
-Institutional Quantitative Intelligence Platform
+<div class="hero-subtitle">
+Institutional Deep Learning Portfolio Intelligence Platform
+</div>
+
 </div>
 """, unsafe_allow_html=True)
-
-st.markdown("---")
 
 # =========================================================
 # MARKET OVERVIEW
 # =========================================================
 
-ticker1, ticker2, ticker3, ticker4 = st.columns(4)
+market1, market2, market3, market4 = st.columns(4)
 
-ticker1.metric("NASDAQ", "18,420", "+1.8%")
-ticker2.metric("S&P 500", "5,421", "+0.9%")
-ticker3.metric("BTC", "$104,220", "+3.1%")
-ticker4.metric("VIX", "13.8", "-4.2%")
+market1.metric("NASDAQ", "18,420", "+1.8%")
+market2.metric("S&P 500", "5,421", "+0.9%")
+market3.metric("BTC", "$104,220", "+3.1%")
+market4.metric("VIX", "13.8", "-4.2%")
 
 st.markdown("---")
 
 # =========================================================
-# KPI METRICS
+# PREMIUM KPI CARDS
 # =========================================================
 
-metric1, metric2, metric3, metric4 = st.columns(4)
+st.markdown("""
+<div class="metric-container">
 
-metric1.metric(
-    "Portfolio Return",
-    "18.42%",
-    "+2.14%"
-)
+<div class="metric-card">
+    <div class="metric-title">
+        Portfolio Return
+    </div>
 
-metric2.metric(
-    "Sharpe Ratio",
-    "1.87",
-    "+0.18"
-)
+    <div class="metric-value">
+        18.42%
+    </div>
 
-metric3.metric(
-    "Annual Volatility",
-    "11.26%",
-    "-1.02%"
-)
+    <div class="metric-positive">
+        ▲ +2.14%
+    </div>
+</div>
 
-metric4.metric(
-    "Maximum Drawdown",
-    "-6.18%",
-    "-0.42%"
-)
+<div class="metric-card">
+    <div class="metric-title">
+        Sharpe Ratio
+    </div>
 
-st.markdown("---")
+    <div class="metric-value">
+        1.87
+    </div>
+
+    <div class="metric-positive">
+        ▲ +0.18
+    </div>
+</div>
+
+<div class="metric-card">
+    <div class="metric-title">
+        Annual Volatility
+    </div>
+
+    <div class="metric-value">
+        11.26%
+    </div>
+
+    <div class="metric-negative">
+        ▼ -1.02%
+    </div>
+</div>
+
+<div class="metric-card">
+    <div class="metric-title">
+        Max Drawdown
+    </div>
+
+    <div class="metric-value">
+        -6.18%
+    </div>
+
+    <div class="metric-positive">
+        ▲ Recovery Improving
+    </div>
+</div>
+
+</div>
+""", unsafe_allow_html=True)
 
 # =========================================================
 # MAIN TABS
@@ -189,9 +334,9 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 
 with tab1:
 
-    st.subheader("Portfolio Performance")
+    st.markdown("## Portfolio Performance")
 
-    returns = np.random.randn(300).cumsum()
+    returns = np.random.randn(250).cumsum()
 
     performance_df = pd.DataFrame({
         "Portfolio Returns": returns
@@ -203,9 +348,26 @@ with tab1:
         template="plotly_dark"
     )
 
+    fig.update_traces(
+        line=dict(
+            width=4,
+            color="#60A5FA"
+        )
+    )
+
     fig.update_layout(
         paper_bgcolor="#050816",
-        plot_bgcolor="#050816"
+        plot_bgcolor="#050816",
+
+        font=dict(color="white"),
+
+        xaxis=dict(
+            showgrid=False
+        ),
+
+        yaxis=dict(
+            gridcolor="rgba(255,255,255,0.08)"
+        )
     )
 
     st.plotly_chart(
@@ -217,8 +379,6 @@ with tab1:
 
     with col1:
 
-        st.markdown("### Asset Allocation")
-
         pie_fig = go.Figure(
             data=[
                 go.Pie(
@@ -229,6 +389,7 @@ with tab1:
                         "TSLA",
                         "META"
                     ],
+
                     values=[
                         22,
                         18,
@@ -236,14 +397,16 @@ with tab1:
                         16,
                         20
                     ],
-                    hole=0.4
+
+                    hole=0.5
                 )
             ]
         )
 
         pie_fig.update_layout(
             template="plotly_dark",
-            paper_bgcolor="#050816"
+            paper_bgcolor="#050816",
+            plot_bgcolor="#050816"
         )
 
         st.plotly_chart(
@@ -253,8 +416,6 @@ with tab1:
 
     with col2:
 
-        st.markdown("### Portfolio Statistics")
-
         stats_df = pd.DataFrame({
             "Metric": [
                 "Alpha",
@@ -263,6 +424,7 @@ with tab1:
                 "Information Ratio",
                 "Tracking Error"
             ],
+
             "Value": [
                 0.18,
                 1.04,
@@ -283,12 +445,12 @@ with tab1:
 
 with tab2:
 
-    st.subheader("AI Forecasting Models")
+    st.markdown("## AI Forecasting Models")
 
     forecast_df = pd.DataFrame({
-        "LSTM": np.random.randn(150).cumsum(),
-        "Transformer": np.random.randn(150).cumsum(),
-        "Ensemble": np.random.randn(150).cumsum()
+        "LSTM": np.random.randn(120).cumsum(),
+        "Transformer": np.random.randn(120).cumsum(),
+        "Ensemble": np.random.randn(120).cumsum()
     })
 
     forecast_fig = px.line(
@@ -316,11 +478,13 @@ with tab2:
             "Transformer",
             "Ensemble AI"
         ],
+
         "RMSE": [
             0.018,
             0.015,
             0.011
         ],
+
         "Accuracy": [
             "82%",
             "87%",
@@ -339,7 +503,7 @@ with tab2:
 
 with tab3:
 
-    st.subheader("Financial Sentiment Intelligence")
+    st.markdown("## Financial Sentiment Intelligence")
 
     sentiment_df = pd.DataFrame({
         "Sentiment": [
@@ -347,6 +511,7 @@ with tab3:
             "Neutral",
             "Negative"
         ],
+
         "Score": [
             64,
             22,
@@ -377,6 +542,7 @@ with tab3:
             "Technology sector volatility stabilizes",
             "Institutional capital rotates into growth assets"
         ],
+
         "Sentiment": [
             "Positive",
             "Neutral",
@@ -395,10 +561,11 @@ with tab3:
 
 with tab4:
 
-    st.subheader("Quantitative Risk Monitoring")
+    st.markdown("## Quantitative Risk Monitoring")
 
     risk_df = pd.DataFrame(
         np.random.randn(10, 5),
+
         columns=[
             "AAPL",
             "MSFT",
@@ -412,7 +579,9 @@ with tab4:
         risk_df.style.background_gradient(cmap="viridis")
     )
 
-    monte_carlo = np.cumsum(np.random.randn(1000))
+    monte_carlo = np.cumsum(
+        np.random.randn(1000)
+    )
 
     mc_df = pd.DataFrame({
         "Monte Carlo Simulation": monte_carlo
@@ -439,7 +608,7 @@ with tab4:
 
 with tab5:
 
-    st.subheader("Dynamic Allocation Engine")
+    st.markdown("## Dynamic Allocation Engine")
 
     allocation_df = pd.DataFrame({
         "Asset": [
@@ -450,6 +619,7 @@ with tab5:
             "META",
             "AMZN"
         ],
+
         "Expected Return": [
             14.2,
             12.4,
@@ -458,6 +628,7 @@ with tab5:
             13.2,
             11.9
         ],
+
         "Optimized Weight": [
             0.22,
             0.18,
