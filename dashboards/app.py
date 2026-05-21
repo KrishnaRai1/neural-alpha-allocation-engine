@@ -162,7 +162,7 @@ target_column = numeric_columns[0]
 series = prediction_df[target_column].dropna()
 
 # =========================================================
-# FINANCIAL METRICS
+# REAL FINANCIAL METRICS
 # =========================================================
 
 returns = series.pct_change().dropna()
@@ -199,30 +199,49 @@ max_drawdown = round(
 # AI SIGNAL SCORE
 # =========================================================
 
-signal_strength = round(
+return_score = np.clip(
+    portfolio_return / 30,
+    0,
+    1
+)
+
+sharpe_score = np.clip(
+    sharpe_ratio / 3,
+    0,
+    1
+)
+
+volatility_penalty = np.clip(
+    volatility / 40,
+    0,
+    1
+)
+
+drawdown_penalty = np.clip(
+    abs(max_drawdown) / 50,
+    0,
+    1
+)
+
+signal_strength = int(
+
     (
-        (
-            sharpe_ratio * 35
-        )
+        return_score * 35
         +
-        (
-            max(
-                portfolio_return,
-                0
-            ) * 0.8
-        )
-        -
-        (
-            abs(max_drawdown) * 1.2
-        )
-    )
+        sharpe_score * 35
+        +
+        (1 - volatility_penalty) * 15
+        +
+        (1 - drawdown_penalty) * 15
+
+    ) * 100
 )
 
 signal_strength = int(
     np.clip(
         signal_strength,
-        38,
-        94
+        45,
+        92
     )
 )
 
@@ -309,7 +328,7 @@ with c4:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # =========================================================
-# MAIN DASHBOARD GRID
+# MAIN GRID
 # =========================================================
 
 left_col, right_col = st.columns([2.4,1])
@@ -358,7 +377,7 @@ with left_col:
     )
 
 # =========================================================
-# RIGHT PANEL
+# AI SIGNAL PANEL
 # =========================================================
 
 with right_col:
@@ -560,7 +579,7 @@ st.plotly_chart(
 )
 
 # =========================================================
-# FINANCIAL NEWS
+# FINANCIAL SENTIMENT
 # =========================================================
 
 st.markdown("---")
@@ -587,7 +606,70 @@ if len(news_files) > 0:
         f"Loaded news dataset: {selected_news.name}"
     )
 
-    st.json(news_data)
+    articles = news_data.get(
+        "articles",
+        []
+    )
+
+    for article in articles[:5]:
+
+        title = article.get(
+            "title",
+            "No Title"
+        )
+
+        source = (
+            article.get(
+                "source",
+                {}
+            ).get(
+                "name",
+                "Unknown"
+            )
+        )
+
+        published = article.get(
+            "publishedAt",
+            "N/A"
+        )
+
+        url = article.get(
+            "url",
+            "#"
+        )
+
+        description = article.get(
+            "description",
+            "No summary available."
+        )
+
+        st.markdown(f"""
+        <div style="
+            background:#111827;
+            padding:20px;
+            border-radius:18px;
+            margin-bottom:18px;
+            border:1px solid rgba(255,255,255,0.06);
+        ">
+
+        <h4 style="color:white;">
+        {title}
+        </h4>
+
+        <p style="color:#94A3B8;">
+        {description}
+        </p>
+
+        <p style="color:#60A5FA;">
+        {source} • {published}
+        </p>
+
+        <a href="{url}" target="_blank">
+        Read Full Article
+        </a>
+
+        </div>
+        """, unsafe_allow_html=True)
 
 else:
 
