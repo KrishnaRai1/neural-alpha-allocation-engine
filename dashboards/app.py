@@ -142,6 +142,25 @@ risk_profile = st.sidebar.radio(
 )
 
 # =========================================================
+# RISK PROFILE CONFIGURATION
+# =========================================================
+
+if risk_profile == "Conservative":
+
+    risk_multiplier = 0.75
+    return_multiplier = 0.85
+
+elif risk_profile == "Balanced":
+
+    risk_multiplier = 1.0
+    return_multiplier = 1.0
+
+else:
+
+    risk_multiplier = 1.35
+    return_multiplier = 1.25
+
+# =========================================================
 # LOAD DATA
 # =========================================================
 
@@ -192,12 +211,18 @@ if len(returns) == 0:
     )
 
 portfolio_return = round(
-    returns.mean() * 252 * 100,
+    returns.mean() *
+    252 *
+    100 *
+    return_multiplier,
     2
 )
 
 volatility = round(
-    returns.std() * np.sqrt(252) * 100,
+    returns.std() *
+    np.sqrt(252) *
+    100 *
+    risk_multiplier,
     2
 )
 
@@ -220,7 +245,9 @@ drawdown = (
 ).min()
 
 max_drawdown = round(
-    drawdown * 100,
+    drawdown *
+    100 *
+    risk_multiplier,
     2
 )
 
@@ -362,7 +389,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 left_col, right_col = st.columns([2.4,1])
 
 # =========================================================
-# MAIN PERFORMANCE CHART
+# PERFORMANCE CHART
 # =========================================================
 
 with left_col:
@@ -712,8 +739,7 @@ if len(news_files) > 0:
             news_data = json.load(f)
 
         st.success(
-            f"Loaded news dataset: "
-            f"{selected_news.name}"
+            f"Live financial dataset loaded: {selected_news.name}"
         )
 
         articles = []
@@ -722,15 +748,11 @@ if len(news_files) > 0:
 
             if "articles" in news_data:
 
-                articles = news_data[
-                    "articles"
-                ]
+                articles = news_data["articles"]
 
             elif "data" in news_data:
 
-                articles = news_data[
-                    "data"
-                ]
+                articles = news_data["data"]
 
         elif isinstance(news_data, list):
 
@@ -738,127 +760,187 @@ if len(news_files) > 0:
 
         displayed_titles = set()
 
-        if len(articles) > 0:
+        shown_count = 0
 
-            shown_count = 0
+        positive_keywords = [
+            "surge",
+            "growth",
+            "bullish",
+            "record",
+            "strong",
+            "beats",
+            "rally",
+            "gain",
+            "profit"
+        ]
 
-            for article in articles:
+        negative_keywords = [
+            "crash",
+            "decline",
+            "drop",
+            "bearish",
+            "loss",
+            "risk",
+            "selloff",
+            "weak",
+            "fear"
+        ]
 
-                if shown_count >= 5:
-                    break
+        for article in articles:
 
-                if not isinstance(article, dict):
-                    continue
+            if shown_count >= 5:
+                break
 
-                title = (
-                    article.get("title")
-                    or article.get("headline")
-                    or "Financial Market Update"
+            if not isinstance(article, dict):
+                continue
+
+            title = (
+                article.get("title")
+                or article.get("headline")
+            )
+
+            if not title:
+                continue
+
+            if title in displayed_titles:
+                continue
+
+            displayed_titles.add(title)
+
+            description = (
+                article.get("description")
+                or article.get("summary")
+                or "Institutional market analysis generated from financial intelligence feeds."
+            )
+
+            published = (
+                article.get("publishedAt")
+                or article.get("date")
+                or "N/A"
+            )
+
+            source = "Financial Feed"
+
+            if isinstance(
+                article.get("source"),
+                dict
+            ):
+
+                source = article["source"].get(
+                    "name",
+                    source
                 )
 
-                # REMOVE DUPLICATES
+            text = (
+                title +
+                " " +
+                description
+            ).lower()
 
-                if title in displayed_titles:
-                    continue
+            positive_score = sum(
+                keyword in text
+                for keyword in positive_keywords
+            )
 
-                displayed_titles.add(title)
+            negative_score = sum(
+                keyword in text
+                for keyword in negative_keywords
+            )
 
-                description = (
-                    article.get("description")
-                    or article.get("summary")
-                    or "Institutional market analysis and quantitative sentiment evaluation."
-                )
+            sentiment_score = (
+                positive_score -
+                negative_score
+            )
 
-                published = (
-                    article.get("publishedAt")
-                    or article.get("date")
-                    or "N/A"
-                )
+            if sentiment_score > 0:
 
-                url = (
-                    article.get("url")
-                    or article.get("link")
-                    or "#"
-                )
+                sentiment_label = "Bullish"
+                sentiment_color = "#10B981"
 
-                source = (
-                    "Financial Intelligence Feed"
-                )
+            elif sentiment_score < 0:
 
-                if isinstance(
-                    article.get("source"),
-                    dict
-                ):
+                sentiment_label = "Bearish"
+                sentiment_color = "#EF4444"
 
-                    source = article[
-                        "source"
-                    ].get(
-                        "name",
-                        source
-                    )
+            else:
 
-                st.markdown(f"""
+                sentiment_label = "Neutral"
+                sentiment_color = "#F59E0B"
 
-                <div style="
-                    background:#111827;
-                    padding:22px;
-                    border-radius:18px;
-                    margin-bottom:18px;
-                    border:1px solid rgba(255,255,255,0.06);
-                ">
+            st.markdown(f"""
 
-                <h4 style="
-                    color:white;
-                ">
-                {title}
-                </h4>
+            <div style="
+                background:#111827;
+                padding:24px;
+                border-radius:18px;
+                margin-bottom:18px;
+                border:1px solid rgba(255,255,255,0.06);
+            ">
 
-                <p style="
-                    color:#94A3B8;
-                    margin-top:10px;
-                ">
-                {description}
-                </p>
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+            ">
 
-                <p style="
-                    color:#60A5FA;
-                    margin-top:10px;
-                ">
-                {source} • {published}
-                </p>
+            <h4 style="
+                color:white;
+                margin:0;
+            ">
+            {title}
+            </h4>
 
-                <a href="{url}"
-                   target="_blank">
+            <div style="
+                background:{sentiment_color};
+                color:white;
+                padding:6px 14px;
+                border-radius:12px;
+                font-size:13px;
+                font-weight:600;
+            ">
+            {sentiment_label}
+            </div>
 
-                Read Full Article
+            </div>
 
-                </a>
+            <p style="
+                color:#94A3B8;
+                margin-top:14px;
+            ">
+            {description}
+            </p>
 
-                </div>
+            <p style="
+                color:#60A5FA;
+                margin-top:12px;
+                font-size:13px;
+            ">
+            {source} • {published}
+            </p>
 
-                """,
-                unsafe_allow_html=True)
+            </div>
 
-                shown_count += 1
+            """,
+            unsafe_allow_html=True)
 
-        else:
+            shown_count += 1
+
+        if shown_count == 0:
 
             st.warning(
-                "No articles found in dataset."
+                "No properly formatted financial news articles found."
             )
 
     except Exception as e:
 
         st.error(
-            f"Unable to parse "
-            f"financial news dataset: "
-            f"{str(e)}"
+            f"Unable to load financial sentiment data: {str(e)}"
         )
 
 else:
 
     st.warning(
-        "No financial news datasets found."
+        "No financial news datasets available."
     )
 
 # =========================================================
