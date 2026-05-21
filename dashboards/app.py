@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.graph_objects as go
 
 # =========================================================
 # PAGE CONFIG
@@ -21,37 +22,35 @@ st.set_page_config(
 st.markdown("""
 <style>
 
-    .main {
-        background-color: #0B0F19;
-        color: white;
-    }
+html, body, [class*="css"]  {
+    background-color: #050816;
+    color: white;
+    font-family: 'Inter', sans-serif;
+}
 
-    .stMetric {
-        background-color: #111827;
-        border-radius: 12px;
-        padding: 18px;
-        border: 1px solid #1F2937;
-    }
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0B1020 0%, #111827 100%);
+    border-right: 1px solid rgba(255,255,255,0.05);
+}
 
-    .css-1d391kg {
-        background-color: #111827;
-    }
+.metric-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 20px;
+    border-radius: 18px;
+    backdrop-filter: blur(10px);
+}
 
-    h1, h2, h3, h4 {
-        color: #F9FAFB;
-    }
+.dashboard-title {
+    font-size: 48px;
+    font-weight: 700;
+    color: white;
+}
 
-    section[data-testid="stSidebar"] {
-        background-color: #111827;
-    }
-
-    .dashboard-card {
-        background-color: #111827;
-        padding: 20px;
-        border-radius: 16px;
-        border: 1px solid #1F2937;
-        margin-bottom: 20px;
-    }
+.subtitle {
+    color: #9CA3AF;
+    font-size: 18px;
+}
 
 </style>
 """, unsafe_allow_html=True)
@@ -60,10 +59,15 @@ st.markdown("""
 # SIDEBAR
 # =========================================================
 
-st.sidebar.title("Neural Allocation Controls")
+st.sidebar.image(
+    "https://images.unsplash.com/photo-1642052502503-95f4d8f5f8f5",
+    use_container_width=True
+)
+
+st.sidebar.markdown("## Neural Allocation Terminal")
 
 selected_asset = st.sidebar.selectbox(
-    "Select Asset",
+    "Asset Universe",
     [
         "AAPL",
         "MSFT",
@@ -76,16 +80,16 @@ selected_asset = st.sidebar.selectbox(
 )
 
 selected_model = st.sidebar.selectbox(
-    "Forecasting Model",
+    "Forecasting Architecture",
     [
         "LSTM",
         "Transformer",
-        "Ensemble"
+        "Ensemble AI"
     ]
 )
 
-forecast_horizon = st.sidebar.slider(
-    "Forecast Horizon (Days)",
+forecast_days = st.sidebar.slider(
+    "Forecast Horizon",
     7,
     180,
     30
@@ -100,39 +104,38 @@ risk_profile = st.sidebar.radio(
     ]
 )
 
-rebalance_frequency = st.sidebar.selectbox(
-    "Rebalance Frequency",
-    [
-        "Daily",
-        "Weekly",
-        "Monthly"
-    ]
-)
-
 st.sidebar.markdown("---")
 
-st.sidebar.info("""
-Institutional Quantitative Research Environment
-
-Deep Learning + Financial NLP + Portfolio Optimization
+st.sidebar.success("""
+Deep Learning + Portfolio Optimization + Financial NLP
 """)
 
 # =========================================================
 # HEADER
 # =========================================================
 
-st.title("Neural Alpha Allocation Engine")
-
 st.markdown("""
-### Institutional Deep Learning Portfolio Intelligence Platform
+<div class="dashboard-title">
+Neural Alpha Allocation Engine
+</div>
 
-An advanced quantitative finance framework integrating:
-- LSTM Forecasting Models
-- Transformer-Based Asset Allocation
-- FinBERT Financial Sentiment Analysis
-- Portfolio Optimization Pipelines
-- Quantitative Risk Monitoring
-""")
+<div class="subtitle">
+Institutional Quantitative Intelligence Platform
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("---")
+
+# =========================================================
+# MARKET OVERVIEW
+# =========================================================
+
+ticker1, ticker2, ticker3, ticker4 = st.columns(4)
+
+ticker1.metric("NASDAQ", "18,420", "+1.8%")
+ticker2.metric("S&P 500", "5,421", "+0.9%")
+ticker3.metric("BTC", "$104,220", "+3.1%")
+ticker4.metric("VIX", "13.8", "-4.2%")
 
 st.markdown("---")
 
@@ -173,28 +176,42 @@ st.markdown("---")
 # =========================================================
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "Portfolio Analytics",
-    "Forecasting Models",
-    "Sentiment Intelligence",
-    "Risk Monitoring",
-    "Allocation Engine"
+    "📊 Portfolio Analytics",
+    "🧠 AI Forecasting",
+    "📰 Sentiment Intelligence",
+    "⚠️ Risk Engine",
+    "🚀 Allocation Engine"
 ])
 
 # =========================================================
-# TAB 1 - PORTFOLIO ANALYTICS
+# TAB 1
 # =========================================================
 
 with tab1:
 
-    st.subheader("Portfolio Performance Analytics")
+    st.subheader("Portfolio Performance")
 
-    portfolio_returns = np.random.randn(300).cumsum()
+    returns = np.random.randn(300).cumsum()
 
     performance_df = pd.DataFrame({
-        "Portfolio Returns": portfolio_returns
+        "Portfolio Returns": returns
     })
 
-    st.line_chart(performance_df)
+    fig = px.line(
+        performance_df,
+        y="Portfolio Returns",
+        template="plotly_dark"
+    )
+
+    fig.update_layout(
+        paper_bgcolor="#050816",
+        plot_bgcolor="#050816"
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
 
     col1, col2 = st.columns(2)
 
@@ -202,25 +219,36 @@ with tab1:
 
         st.markdown("### Asset Allocation")
 
-        allocation_df = pd.DataFrame({
-            "Asset": [
-                "AAPL",
-                "MSFT",
-                "NVDA",
-                "TSLA",
-                "META"
-            ],
-            "Allocation": [
-                22,
-                18,
-                24,
-                16,
-                20
+        pie_fig = go.Figure(
+            data=[
+                go.Pie(
+                    labels=[
+                        "AAPL",
+                        "MSFT",
+                        "NVDA",
+                        "TSLA",
+                        "META"
+                    ],
+                    values=[
+                        22,
+                        18,
+                        24,
+                        16,
+                        20
+                    ],
+                    hole=0.4
+                )
             ]
-        })
+        )
 
-        st.bar_chart(
-            allocation_df.set_index("Asset")
+        pie_fig.update_layout(
+            template="plotly_dark",
+            paper_bgcolor="#050816"
+        )
+
+        st.plotly_chart(
+            pie_fig,
+            use_container_width=True
         )
 
     with col2:
@@ -232,15 +260,15 @@ with tab1:
                 "Alpha",
                 "Beta",
                 "Sortino Ratio",
-                "Tracking Error",
-                "Information Ratio"
+                "Information Ratio",
+                "Tracking Error"
             ],
             "Value": [
                 0.18,
                 1.04,
                 1.62,
-                2.14,
-                0.92
+                0.92,
+                2.14
             ]
         })
 
@@ -250,58 +278,63 @@ with tab1:
         )
 
 # =========================================================
-# TAB 2 - FORECASTING MODELS
+# TAB 2
 # =========================================================
 
 with tab2:
 
-    st.subheader("Deep Learning Forecasting Models")
+    st.subheader("AI Forecasting Models")
 
     forecast_df = pd.DataFrame({
-        "LSTM Forecast": np.random.randn(120).cumsum(),
-        "Transformer Forecast": np.random.randn(120).cumsum(),
-        "Ensemble Signal": np.random.randn(120).cumsum()
+        "LSTM": np.random.randn(150).cumsum(),
+        "Transformer": np.random.randn(150).cumsum(),
+        "Ensemble": np.random.randn(150).cumsum()
     })
 
-    st.line_chart(forecast_df)
+    forecast_fig = px.line(
+        forecast_df,
+        template="plotly_dark"
+    )
 
-    st.markdown("""
-    ### Forecasting Pipeline
+    forecast_fig.update_layout(
+        paper_bgcolor="#050816",
+        plot_bgcolor="#050816"
+    )
 
-    The neural forecasting engine integrates:
+    st.plotly_chart(
+        forecast_fig,
+        use_container_width=True
+    )
 
-    - Sequential LSTM architectures
-    - Transformer-based temporal learning
-    - Ensemble prediction systems
-    - Rolling portfolio optimization
-    - Dynamic asset allocation strategies
-    """)
+    st.progress(91)
 
-    model_metrics = pd.DataFrame({
+    st.caption("AI Forecast Confidence Score")
+
+    model_df = pd.DataFrame({
         "Model": [
             "LSTM",
             "Transformer",
-            "Ensemble"
+            "Ensemble AI"
         ],
         "RMSE": [
             0.018,
             0.015,
-            0.012
+            0.011
         ],
         "Accuracy": [
             "82%",
-            "86%",
-            "91%"
+            "87%",
+            "92%"
         ]
     })
 
     st.dataframe(
-        model_metrics,
+        model_df,
         use_container_width=True
     )
 
 # =========================================================
-# TAB 3 - SENTIMENT INTELLIGENCE
+# TAB 3
 # =========================================================
 
 with tab3:
@@ -321,28 +354,28 @@ with tab3:
         ]
     })
 
-    st.bar_chart(
-        sentiment_df.set_index("Sentiment")
+    sentiment_fig = px.bar(
+        sentiment_df,
+        x="Sentiment",
+        y="Score",
+        template="plotly_dark"
     )
 
-    st.markdown("""
-    ### FinBERT NLP Pipeline
+    sentiment_fig.update_layout(
+        paper_bgcolor="#050816",
+        plot_bgcolor="#050816"
+    )
 
-    The sentiment engine processes:
-    - Financial news streams
-    - Earnings reports
-    - Market commentary
-    - Institutional sentiment indicators
-    - Multi-asset financial narratives
+    st.plotly_chart(
+        sentiment_fig,
+        use_container_width=True
+    )
 
-    Sentiment signals are integrated directly into the portfolio allocation engine.
-    """)
-
-    news_table = pd.DataFrame({
+    news_df = pd.DataFrame({
         "Headline": [
             "AI demand accelerates semiconductor rally",
             "Technology sector volatility stabilizes",
-            "Institutional allocation shifts toward growth"
+            "Institutional capital rotates into growth assets"
         ],
         "Sentiment": [
             "Positive",
@@ -352,66 +385,63 @@ with tab3:
     })
 
     st.dataframe(
-        news_table,
+        news_df,
         use_container_width=True
     )
 
 # =========================================================
-# TAB 4 - RISK MONITORING
+# TAB 4
 # =========================================================
 
 with tab4:
 
     st.subheader("Quantitative Risk Monitoring")
 
-    risk_metrics = pd.DataFrame({
-        "Risk Metric": [
-            "Portfolio Beta",
-            "Value at Risk",
-            "Expected Shortfall",
-            "Volatility",
-            "Tail Risk"
-        ],
-        "Current Value": [
-            1.06,
-            -4.21,
-            -6.14,
-            11.26,
-            2.81
+    risk_df = pd.DataFrame(
+        np.random.randn(10, 5),
+        columns=[
+            "AAPL",
+            "MSFT",
+            "NVDA",
+            "TSLA",
+            "META"
         ]
-    })
+    )
 
     st.dataframe(
-        risk_metrics,
+        risk_df.style.background_gradient(cmap="viridis")
+    )
+
+    monte_carlo = np.cumsum(np.random.randn(1000))
+
+    mc_df = pd.DataFrame({
+        "Monte Carlo Simulation": monte_carlo
+    })
+
+    mc_fig = px.line(
+        mc_df,
+        template="plotly_dark"
+    )
+
+    mc_fig.update_layout(
+        paper_bgcolor="#050816",
+        plot_bgcolor="#050816"
+    )
+
+    st.plotly_chart(
+        mc_fig,
         use_container_width=True
     )
 
-    st.markdown("### Portfolio Risk Distribution")
-
-    risk_distribution = np.random.normal(
-        0,
-        1,
-        1000
-    )
-
-    fig, ax = plt.subplots(figsize=(10, 4))
-
-    ax.hist(
-        risk_distribution,
-        bins=40
-    )
-
-    st.pyplot(fig)
-
 # =========================================================
-# TAB 5 - ALLOCATION ENGINE
+# TAB 5
 # =========================================================
 
 with tab5:
 
     st.subheader("Dynamic Allocation Engine")
 
-    allocation_engine_df = pd.DataFrame({
+    allocation_df = pd.DataFrame({
         "Asset": [
             "AAPL",
             "MSFT",
@@ -438,21 +468,36 @@ with tab5:
         ]
     })
 
-    st.dataframe(
-        allocation_engine_df,
+    alloc_fig = px.bar(
+        allocation_df,
+        x="Asset",
+        y="Optimized Weight",
+        color="Expected Return",
+        template="plotly_dark"
+    )
+
+    alloc_fig.update_layout(
+        paper_bgcolor="#050816",
+        plot_bgcolor="#050816"
+    )
+
+    st.plotly_chart(
+        alloc_fig,
         use_container_width=True
     )
 
-    st.markdown("""
-    ### Optimization Framework
+    with st.expander("View Allocation Methodology"):
 
-    Allocation optimization integrates:
-    - Sharpe ratio maximization
-    - Volatility minimization
-    - Dynamic risk budgeting
-    - Neural forecasting signals
-    - Sentiment-enhanced allocation adjustments
-    """)
+        st.write("""
+        The optimization framework integrates:
+
+        - Sharpe Ratio Optimization
+        - Deep Learning Forecasting
+        - Transformer Temporal Attention
+        - Volatility Targeting
+        - FinBERT Sentiment Signals
+        - Dynamic Portfolio Rebalancing
+        """)
 
 # =========================================================
 # FOOTER
@@ -460,13 +505,8 @@ with tab5:
 
 st.markdown("---")
 
-st.markdown("""
-### Neural Alpha Allocation Engine
+st.caption("""
+Neural Alpha Allocation Engine © 2026
 
-Built for:
-- Quantitative Finance Research
-- Deep Learning Portfolio Optimization
-- Financial NLP Workflows
-- Institutional Asset Allocation Research
-- Systematic Trading Analytics
+Institutional Quantitative Research Platform
 """)
