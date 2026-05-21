@@ -646,4 +646,3 @@ Neural Alpha Allocation Engine © 2026
 
 Institutional Quantitative Research & Deep Learning Infrastructure
 """)
-```
